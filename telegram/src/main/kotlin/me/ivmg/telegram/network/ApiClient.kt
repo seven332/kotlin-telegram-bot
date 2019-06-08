@@ -19,8 +19,11 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
+import retrofit2.Converter
+import retrofit2.Converter.Factory
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.lang.reflect.Type
 import java.net.Proxy
 import java.nio.file.Files
 import java.util.Date
@@ -66,6 +69,19 @@ class ApiClient(
             .baseUrl("$apiUrl$token/")
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(object : Factory() {
+                override fun stringConverter(
+                    type: Type,
+                    annotations: Array<Annotation>,
+                    retrofit: Retrofit
+                ): Converter<*, String>? {
+                    return if (type == Date::class.java) {
+                        Converter<Date, String> { value -> (value.time / 1000L).toString() }
+                    } else {
+                        null
+                    }
+                }
+            })
             .build()
 
         service = retrofit.create(ApiService::class.java)
